@@ -1,0 +1,9 @@
+version: "2"
+
+linters:
+  settings:
+    custom:
+      loglint:
+        path: ./main.so
+        description: Checks if log messages follow project conventions
+        original-url: https://github.com/NikitaBorovikov/logLinter
