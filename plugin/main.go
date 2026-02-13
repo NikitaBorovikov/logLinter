@@ -7,7 +7,5 @@ import (
 )
 
 func New(conf any) ([]*analysis.Analyzer, error) {
-	return []*analysis.Analyzer{
-		loglinter.Analyzer,
-	}, nil
+	return []*analysis.Analyzer{loglinter.Analyzer}, nil
 }

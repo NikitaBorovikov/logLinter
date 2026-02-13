@@ -1,9 +1,12 @@
 package loglinter
 
 import (
+	"fmt"
 	"go/ast"
+	"loglinter/config"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 
 	"golang.org/x/tools/go/analysis"
@@ -15,9 +18,11 @@ var Analyzer = &analysis.Analyzer{
 	Run:  run,
 }
 
-var sensitiveWords = []string{"password", "token", "apikey", "secret", "passphrase"}
-var logPkgNames = []string{"log/slog", "go.uber.org/zap"}
-var logIndentNames = []string{"slog", "zap"}
+var (
+	cfg    *config.Config
+	cfgErr error
+	once   sync.Once
+)
 
 var logMethods = map[string]bool{
 	"Info":  true,
@@ -27,6 +32,13 @@ var logMethods = map[string]bool{
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
+	once.Do(func() {
+		cfg, cfgErr = config.InitConfig()
+	})
+	if cfgErr != nil {
+		return nil, fmt.Errorf("failed to init config: %v", cfgErr)
+	}
+
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(n ast.Node) bool {
 			callExpr, ok := n.(*ast.CallExpr)
@@ -74,7 +86,7 @@ func isLogMethod(pass *analysis.Pass, sel *ast.SelectorExpr) bool {
 	// try to determine the type using the type analyzer
 	if tv, ok := pass.TypesInfo.Types[sel.X]; ok && tv.Type != nil {
 		typStr := tv.Type.String()
-		for _, logPkg := range logPkgNames {
+		for _, logPkg := range cfg.LogPkgNames {
 			if strings.Contains(typStr, logPkg) {
 				return true
 			}
@@ -83,7 +95,7 @@ func isLogMethod(pass *analysis.Pass, sel *ast.SelectorExpr) bool {
 
 	// check by identifier name
 	if ident, ok := sel.X.(*ast.Ident); ok {
-		for _, logIdentName := range logIndentNames {
+		for _, logIdentName := range cfg.LogIndentNames {
 			if ident.Name == logIdentName {
 				return true
 			}
@@ -157,7 +169,7 @@ func isMsgContainSpecialChars(msg string) bool {
 func isContainSensitiveData(msg string) bool {
 	lowerMsg := strings.ToLower(msg)
 
-	for _, word := range sensitiveWords {
+	for _, word := range cfg.SensitiveWords {
 		if strings.Contains(lowerMsg, word) {
 			return true
 		}

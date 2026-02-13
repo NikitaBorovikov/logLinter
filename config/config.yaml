@@ -1,0 +1,14 @@
+sensitive-words:
+  - "password"
+  - "token"
+  - "apikey"
+  - "secret"
+  - "passphrase"
+
+log-package-names:
+  - "log/slog"
+  - "go.uber.org/zap"
+
+log-indent-names:
+  - "slog"
+  - "zap"
