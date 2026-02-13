@@ -59,3 +59,6 @@ CGO_ENABLED=1 go build -buildmode=plugin plugin/main.go
 ```
 go test ./...
 ```
+
+## Примеры использования 
+Примеры использования можно посмотреть <a href="https://github.com/NikitaBorovikov/logLinter/blob/master/example">тут</a>. 
